@@ -17,10 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from ai_model.views import TestCall,ExpenseCategorizerView
+from ai_model.views import GetOcrResult, TestCall,ExpenseCategorizerView
 
 urlpatterns = [
     path('', TestCall.as_view()),
     path('Classification', ExpenseCategorizerView.as_view()),
+    path('getImg', GetOcrResult.as_view()),
 
 ]

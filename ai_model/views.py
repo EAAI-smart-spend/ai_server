@@ -5,7 +5,12 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException, ValidationError, NotFound
+from rest_framework.parsers import MultiPartParser, FormParser
 import joblib
+import easyocr
+from PIL import Image
+import io
+
 
 try:
     TFIDF_VECTORIZER = joblib.load('saved_models/tfidf_vectorizer.pkl')
@@ -34,7 +39,7 @@ class TestCall (APIView):
         return Response({'status': 'SUCCESS','response': 'test'})
     
 class ExpenseCategorizerView(APIView):
-    def post(self, request):
+    def get(self, request):
         """
         Expect JSON: {"text": "Sushi and beer with friends HKD120"}
         Returns predictions from all models.
@@ -70,3 +75,68 @@ class ExpenseCategorizerView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class GetOcrResult(APIView):
+    parser_classes = (MultiPartParser, FormParser)  # Important!
+
+    def post(self, request):  # Usually OCR is done via POST, not GET
+        image_file = request.FILES.get('image')  # 'image' is the key name from frontend
+
+        if not image_file:
+            return Response(
+                {"error": "No image provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Now you have the image file object
+        # You can access: image_file.name, image_file.size, image_file.content_type
+
+        # Example: save temporarily or process directly
+        # content = image_file.read()  # Read bytes
+
+        # TODO: Pass image_file to your OCR function (e.g., pytesseract, easyocr, etc.)
+
+        return Response({"message": "Image received successfully", "filename": image_file.name})
+
+    # Optional: keep GET for health check
+    def get(self, request):
+        return Response({"message": "Send a POST request with an image file"})
+    
+
+class GetOcrResult(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Initialize reader once (loads model into memory)
+        self.reader = easyocr.Reader(
+            lang_list=['ch_sim'],  # Or ['en'] if mixed
+            recog_network='chinese',  # Your custom model name
+            gpu=True  # Set False if no GPU
+        )
+
+    def post(self, request):
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Read image into PIL (EasyOCR accepts file paths, bytes, or PIL)
+        try:
+            image = Image.open(io.BytesIO(image_file.read()))
+        except Exception as e:
+            return Response({"error": "Invalid image"}, status=400)
+
+        # Perform OCR
+        result = self.reader.readtext(image, detail=1)  # detail=1 for boxes + text + confidence
+
+        # Format output
+        ocr_texts = [
+            {"text": text, "confidence": round(conf, 2), "box": box}
+            for (box, text, conf) in result
+        ]
+
+        return Response({
+            "ocr_result": ocr_texts,
+            "total_texts_found": len(ocr_texts)
+        })
