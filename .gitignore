@@ -1,0 +1,20 @@
+# Virtual environment
+ocr_env/
+venv/
+env/
+.venv/
+myenv/
+
+# EasyOCR cache and custom models (usually in user home directory, but add if inside project)
+.EasyOCR/
+__pycache__/
+*.pyc
+
+# Other common Django ignores (good to have)
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/

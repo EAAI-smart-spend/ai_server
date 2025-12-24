@@ -1,3 +1,12 @@
 djangorestframework
 markdown       
 django-filter 
+scikit-learn
+django-cors-headers
+joblib
+pillow
+torch
+torchvision
+torchaudio
+numpy
+easyocr
