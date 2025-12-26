@@ -1,6 +1,7 @@
 
 from django.http import HttpRequest
 from django.shortcuts import render
+from ai_model.predict import extract_total_price
 from ai_model.utils import perform_ocr
 from rest_framework import status
 from rest_framework.views import APIView
@@ -24,11 +25,11 @@ except Exception as e:
     raise ImportError(f"Failed to load models: {e}. Make sure saved_models/ folder exists.")
 
 CATEGORY_MAP = {
-    0: "Groceries (雜貨/超市購物)",
-    1: "Transportation (交通)",
-    2: "Utilities (公用事業)",
-    3: "Entertainment (娛樂)",
-    4: "Food & Drinks (食物與飲料)"
+    0: "購物",
+    1: "交通",
+    2: "其他",
+    3: "娛樂",
+    4: "食飯"
 }
 
 
@@ -116,6 +117,10 @@ class GetOcrResultCategorizer(APIView):
         ocr_data = perform_ocr(image_file)
 
         text = ocr_data['ocr_result_text']
+
+        array_text = ocr_data['ocr_result_array']
+
+        getAmount = extract_total_price(array_text)
         
         if not text:
             return Response(
@@ -129,15 +134,16 @@ class GetOcrResultCategorizer(APIView):
 
             # Get predictions
             predictions = {
-                "Naive Bayes": CATEGORY_MAP[NB_MODEL.predict(vec)[0]],
-                "SVM": CATEGORY_MAP[SVM_MODEL.predict(vec)[0]],
-                "Decision Tree": CATEGORY_MAP[DT_MODEL.predict(vec)[0]],
-                "KNN": CATEGORY_MAP[KNN_MODEL.predict(vec)[0]],
-                "Logistic Regression": CATEGORY_MAP[LOGISTIC_MODEL.predict(vec)[0]],
+                "Naive Bayes": NB_MODEL.predict(vec)[0],
+                "SVM": SVM_MODEL.predict(vec)[0],
+                "Decision Tree": DT_MODEL.predict(vec)[0],
+                "KNN": KNN_MODEL.predict(vec)[0],
+                "Logistic Regression": LOGISTIC_MODEL.predict(vec)[0],
             }
 
             return Response({
                 "input": text,
+                "TotalAmount":getAmount,
                 "predictions": predictions
             })
 

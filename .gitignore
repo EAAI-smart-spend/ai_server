@@ -10,6 +10,8 @@ myenv/
 __pycache__/
 *.pyc
 
+saved_models/
+
 # Other common Django ignores (good to have)
 *.log
 *.pot

@@ -23,13 +23,11 @@ def perform_ocr(image_file) -> dict:
         }
     """
     try:
-        # Read the uploaded file into PIL Image
         image = Image.open(io.BytesIO(image_file.read()))
     except Exception as e:
         raise ValueError(f"Invalid image: {str(e)}")
 
-    # Perform OCR
-    result = reader.readtext(image, detail=1)  # Returns list of (box, text, confidence)
+    result = reader.readtext(image, detail=1)  
 
     # Extract details
     full_details = [
@@ -40,7 +38,11 @@ def perform_ocr(image_file) -> dict:
     # Extract only non-empty texts
     texts_non_empty = [item["text"] for item in full_details if item["text"].strip() != ""]
 
+    print(texts_non_empty)
+
     ocr_result_text = " ".join(texts_non_empty)
+
+    print(ocr_result_text)
 
     return {
         "ocr_result_array": texts_non_empty,
