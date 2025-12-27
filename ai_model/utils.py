@@ -1,41 +1,38 @@
-# ocr_utils.py or inside your views.py / utils.py
 
 from PIL import Image
 import io
 import easyocr
+from paddleocr import PaddleOCR
+import numpy as np
+from io import BytesIO
+from rest_framework import status
+import os
 
-# Initialize the reader ONCE at module level (best practice for performance)
+
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+ocr_instance = PaddleOCR(use_angle_cls=True, lang='ch')
+
 reader = easyocr.Reader(
-    lang_list=['ch_tra'],      # Traditional Chinese
-    recog_network='chinese',   # Your custom model
-    gpu=True                   # Set False if no GPU available
+    lang_list=['ch_tra'],     
+    recog_network='chinese',  
+    gpu=False                   
 )
 
-def perform_ocr(image_file) -> dict:
-    """
-    Takes an uploaded image file (from request.FILES) and returns OCR results.
+def perform_ocr_by_easyocr(image_file) -> dict:
     
-    Returns:
-        {
-            "ocr_result": [list of text strings (non-empty)],
-            "total_texts_found": int,
-            "full_details": [optional: list of dicts with text, conf, box]
-        }
-    """
     try:
         image = Image.open(io.BytesIO(image_file.read()))
     except Exception as e:
         raise ValueError(f"Invalid image: {str(e)}")
 
     result = reader.readtext(image, detail=1)  
-
-    # Extract details
+    
     full_details = [
         {"text": text, "confidence": round(conf, 2), "box": box}
         for box, text, conf in result
     ]
 
-    # Extract only non-empty texts
     texts_non_empty = [item["text"] for item in full_details if item["text"].strip() != ""]
 
     print(texts_non_empty)
@@ -49,5 +46,44 @@ def perform_ocr(image_file) -> dict:
         "ocr_result_text": ocr_result_text,
         "total_texts_found": len(full_details),
 
-        # "full_details": full_details  # Optional: include if you want boxes/confidence
+    }
+
+
+
+def perform_ocr_by_paddle(image_file):
+    
+    if not image_file:
+        raise ValueError("No image file provided")
+
+    if not image_file.content_type.startswith('image/'):
+        raise ValueError("Uploaded file is not a valid image")
+
+    image_bytes = BytesIO(image_file.read())
+
+    try:
+        pil_image = Image.open(image_bytes).convert('RGB')
+        img_array = np.array(pil_image)
+    except Exception as e:
+        raise ValueError(f"Invalid or corrupted image: {str(e)}")
+
+    result = ocr_instance.ocr(img_array)
+
+    if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict):
+        res_dict = result[0]
+    elif isinstance(result, dict):
+        res_dict = result
+    else:
+        raise ValueError("No text detected or unexpected result format")
+
+    if 'rec_texts' not in res_dict or not res_dict['rec_texts']:
+        raise ValueError("No text detected in the image")
+
+    texts = res_dict['rec_texts']  
+
+   
+    return {
+        "extracted_text": "\n".join(texts),       
+        "ocr_result_text": " ".join(texts),  
+        "ocr_result_array": texts,                       
+        "total_texts_found": len(texts)
     }

@@ -2,7 +2,7 @@
 from django.http import HttpRequest
 from django.shortcuts import render
 from ai_model.predict import extract_total_price
-from ai_model.utils import perform_ocr
+from ai_model.utils import perform_ocr_by_easyocr, perform_ocr_by_paddle
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,6 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import joblib
 import easyocr
 from PIL import Image
+
 import io
 
 
@@ -79,6 +80,27 @@ class ExpenseCategorizerView(APIView):
             )
 
 
+class getImgByPaddle(APIView):
+    def post(self, request):
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return Response(
+                {"error": "No image provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # try:
+        ocr_data = perform_ocr_by_paddle(image_file)
+        return Response(ocr_data)
+        # except ValueError as e:
+        #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # except Exception as e:
+        #     return Response(
+        #         {"error": "OCR processing failed"},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        #     )
+
+
 class GetOcrResult(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -91,7 +113,7 @@ class GetOcrResult(APIView):
             )
 
         try:
-            ocr_data = perform_ocr(image_file)
+            ocr_data = perform_ocr_by_easyocr(image_file)
             return Response(ocr_data)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -112,9 +134,13 @@ class GetOcrResultCategorizer(APIView):
                 {"error": "No image provided"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        ocr_engine = request.data.get('ocr_engine', 'paddle').lower()
         
-        ocr_data = perform_ocr(image_file)
+        if ocr_engine == 'easyocr':
+            ocr_data = perform_ocr_by_easyocr(image_file)
+        elif ocr_engine == 'paddle':
+            ocr_data = perform_ocr_by_paddle(image_file)
+
 
         text = ocr_data['ocr_result_text']
 
@@ -153,3 +179,4 @@ class GetOcrResultCategorizer(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
+

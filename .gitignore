@@ -1,5 +1,6 @@
 # Virtual environment
 ocr_env/
+ocr_env2/
 venv/
 env/
 .venv/
