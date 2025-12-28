@@ -134,7 +134,7 @@ class GetOcrResultCategorizer(APIView):
                 {"error": "No image provided"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        ocr_engine = request.data.get('ocr_engine', 'paddle').lower()
+        ocr_engine = request.data.get('ocr_engine', 'easyocr').lower()
         
         if ocr_engine == 'easyocr':
             ocr_data = perform_ocr_by_easyocr(image_file)
@@ -155,10 +155,8 @@ class GetOcrResultCategorizer(APIView):
             )
 
         try:
-            # Vectorize the input text
             vec = TFIDF_VECTORIZER.transform([text])
 
-            # Get predictions
             predictions = {
                 "Naive Bayes": NB_MODEL.predict(vec)[0],
                 "SVM": SVM_MODEL.predict(vec)[0],

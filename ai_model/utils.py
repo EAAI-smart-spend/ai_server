@@ -35,7 +35,7 @@ def perform_ocr_by_easyocr(image_file) -> dict:
 
     texts_non_empty = [item["text"] for item in full_details if item["text"].strip() != ""]
 
-    print(texts_non_empty)
+    # print(texts_non_empty)
 
     ocr_result_text = " ".join(texts_non_empty)
 
