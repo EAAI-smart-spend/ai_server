@@ -33,6 +33,14 @@ CATEGORY_MAP = {
     4: "食飯"
 }
 
+CATEGORY_MAP_FINAL = {
+    "購物": "Groceries (雜貨/超市購物)",
+    "交通":"Transportation (交通)",
+    "其他":"Utilities (公用事業)",
+    "娛樂":"Entertainment (娛樂)",
+    "食飯":"Food & Drinks (食物與飲料)"
+}
+
 
 # Create your views here.
 class TestCall (APIView): 
@@ -158,11 +166,11 @@ class GetOcrResultCategorizer(APIView):
             vec = TFIDF_VECTORIZER.transform([text])
 
             predictions = {
-                "Naive Bayes": NB_MODEL.predict(vec)[0],
-                "SVM": SVM_MODEL.predict(vec)[0],
-                "Decision Tree": DT_MODEL.predict(vec)[0],
-                "KNN": KNN_MODEL.predict(vec)[0],
-                "Logistic Regression": LOGISTIC_MODEL.predict(vec)[0],
+                "Naive Bayes": CATEGORY_MAP_FINAL[NB_MODEL.predict(vec)[0]],
+                "SVM": CATEGORY_MAP_FINAL[SVM_MODEL.predict(vec)[0]],
+                "Decision Tree": CATEGORY_MAP_FINAL[DT_MODEL.predict(vec)[0]],
+                "KNN": CATEGORY_MAP_FINAL[KNN_MODEL.predict(vec)[0]],
+                "Logistic Regression": CATEGORY_MAP_FINAL[LOGISTIC_MODEL.predict(vec)[0]],
             }
 
             return Response({
