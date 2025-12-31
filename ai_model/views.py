@@ -1,7 +1,7 @@
 
 from django.http import HttpRequest
 from django.shortcuts import render
-from ai_model.predict import extract_total_price
+from ai_model.predict import extract_total_price, getLResult
 from ai_model.utils import perform_ocr_by_easyocr, perform_ocr_by_paddle
 from rest_framework import status
 from rest_framework.views import APIView
@@ -69,11 +69,12 @@ class ExpenseCategorizerView(APIView):
 
             # Get predictions
             predictions = {
-                "Naive Bayes": CATEGORY_MAP[NB_MODEL.predict(vec)[0]],
-                "SVM": CATEGORY_MAP[SVM_MODEL.predict(vec)[0]],
-                "Decision Tree": CATEGORY_MAP[DT_MODEL.predict(vec)[0]],
-                "KNN": CATEGORY_MAP[KNN_MODEL.predict(vec)[0]],
-                "Logistic Regression": CATEGORY_MAP[LOGISTIC_MODEL.predict(vec)[0]],
+                "Naive Bayes": NB_MODEL.predict(vec)[0],
+                "SVM": SVM_MODEL.predict(vec)[0],
+                "Decision Tree": DT_MODEL.predict(vec)[0],
+                "KNN": KNN_MODEL.predict(vec)[0],
+                "Logistic Regression": LOGISTIC_MODEL.predict(vec)[0],
+                "BERT": CATEGORY_MAP_FINAL.get(getLResult(text))
             }
 
             return Response({
@@ -171,6 +172,7 @@ class GetOcrResultCategorizer(APIView):
                 "Decision Tree": CATEGORY_MAP_FINAL[DT_MODEL.predict(vec)[0]],
                 "KNN": CATEGORY_MAP_FINAL[KNN_MODEL.predict(vec)[0]],
                 "Logistic Regression": CATEGORY_MAP_FINAL[LOGISTIC_MODEL.predict(vec)[0]],
+                "BERT": CATEGORY_MAP_FINAL.get(getLResult(text))
             }
 
             return Response({
@@ -185,4 +187,3 @@ class GetOcrResultCategorizer(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
-

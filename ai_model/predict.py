@@ -54,6 +54,9 @@ def getLResult(text: str):
         category = id2label.get(label_id, "其他")
     else:
         category = label
+
+    return category
+    """
     confidence = result["score"]
     total_price = extract_total_price(text.split('\n'))
     return {
@@ -61,3 +64,4 @@ def getLResult(text: str):
         "confidence": confidence,
         "amount": total_price
     }
+    """

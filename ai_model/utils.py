@@ -13,12 +13,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 ocr_instance = PaddleOCR(use_angle_cls=True, lang='ch')
 
+reader = easyocr.Reader(['ch_tra', 'en'], gpu=False)
+"""
 reader = easyocr.Reader(
     lang_list=['ch_tra'],     
     recog_network='chinese',  
     gpu=False                   
 )
-
+"""
 def perform_ocr_by_easyocr(image_file) -> dict:
     
     try:
